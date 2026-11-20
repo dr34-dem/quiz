@@ -565,7 +565,8 @@ function player() {
   }
 }
 
-if (location.hash === '#host') host(); else player();
+if (/^#host/i.test(location.hash)) host(); else player();
+addEventListener('hashchange', () => location.reload());
 </script>
 </body>
 </html>
