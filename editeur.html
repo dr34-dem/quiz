@@ -83,6 +83,7 @@ button:disabled{opacity:.5}
 .exrow .pic svg{height:min(16vh,160px)}.exrow .pic img{height:auto;max-height:22vh}
 .expl{animation:slideIn .6s ease-out .3s both}
 .expl p{font-size:clamp(17px,2.1vw,27px);line-height:1.4}
+.chk{display:flex;align-items:center;gap:8px;font-size:15px}.chk input{width:auto;padding:0}
 .btnrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
 .alt{background:var(--card);color:var(--fg);border:2px solid var(--mut)}
 [hidden]{display:none!important}
@@ -119,10 +120,35 @@ textarea.short{min-height:90px;font-size:17px}
 .hq .pic svg{height:100%;max-height:300px;width:auto}
 .hq .pic img{height:100%;max-height:none;width:auto;max-width:100%}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+/* ---- Export PDF ---- */
+#pr{position:fixed;left:-20000px;top:0;width:1280px;pointer-events:none}
+.pg{width:1280px;height:720px;overflow:hidden;position:relative;background:#f4f1ff;color:#1d1a2e;--bg:#f4f1ff;--fg:#1d1a2e;--card:#fff;--mut:#6b6785;--acc:#46178f;--ok:#1e7a08;--ko:#c4122f;color-scheme:light;break-after:page;page-break-after:always}
+.pg:last-child{break-after:auto;page-break-after:auto}
+.pgi{padding:26px 44px;display:flex;flex-direction:column;gap:14px;height:720px;transform-origin:top left}
+.pg,.pg *{animation:none!important;transition:none!important;opacity:1;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.pg .hq{height:100%}
+.pg .hq .pic{flex:1 1 0;min-height:80px}
+.pg .hq .pic svg{height:100%;max-height:300px}
+.pg .hq .pic img{height:100%;max-height:none}
+.pg h1{font-size:34px}.pg h2{font-size:28px}
+.pg .good-tiles{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.pg .good-tiles .opt{min-height:70px;font-size:26px}
+.pg .hopts .opt{min-height:78px;font-size:26px}
+.pg .exrow.has-pic{grid-template-columns:auto 1fr}
+.pg .exrow .pic svg{height:170px}.pg .exrow .pic img{height:auto;max-height:230px;max-width:420px}
+.pg .expl p{font-size:25px}
+.pg .cx{justify-content:center;gap:20px}.pg .cx>.mut{font-size:20px}.pg .cx>.card .mut{font-size:24px;color:#1d1a2e}.pg .cx .exrow .pic img{max-height:260px}.pg .cx .expl p{font-size:27px}
+@page{size:1280px 720px;margin:0}
+@media print{
+  html,body{background:#fff!important;display:block;min-height:0}
+  body>main,.ov{display:none!important}
+  #pr{position:static;left:auto}
+}
 </style>
 </head>
 <body>
 <main id="app"></main>
+<div id="pr" aria-hidden="true"></div>
 <script>
 const SHAPES = ['▲','◆','●','■'];
 const $ = s => document.querySelector(s);
@@ -280,6 +306,26 @@ Je trouve une clé USB dans le parking du bureau, que faire ?;La brancher sur mo
         <button class="alt" data-act="del" aria-label="Supprimer">🗑</button></div></div>`;
   };
 
+  async function exportPdf(wantQ, wantC) {
+    if (!wantQ && !wantC) return msg('Cochez au moins un type de diapo.');
+    const box = $('#pr'); box.innerHTML = '';
+    QZ.forEach((q, k) => {
+      const add = (inner, cx) => { const pg = document.createElement('div'); pg.className = 'pg'; pg.innerHTML = '<div class="pgi' + (cx ? ' cx' : '') + '">' + inner + '</div>'; box.appendChild(pg); };
+      if (wantQ) add(slideQ(q, k, QZ.length, 0));
+      if (wantC) add(slideExpl(q, k, QZ.length), true);
+    });
+    await Promise.all([...box.querySelectorAll('img')].map(i => i.decode ? i.decode().catch(() => {}) : 0));
+    box.querySelectorAll('.pg').forEach(pg => {
+      const inn = pg.firstChild; let z = 1;
+      while (z > 0.5 && inn.scrollHeight > 721) { z -= 0.05; inn.style.zoom = z; }
+      inn.style.height = (720 / z) + 'px';
+    });
+    const done = () => { box.innerHTML = ''; removeEventListener('afterprint', done); };
+    addEventListener('afterprint', done);
+    document.title = slug(qTitle) || 'quiz';
+    setTimeout(() => window.print(), 150);
+  }
+
   function home() {
     render(`<h1>Éditeur de quiz</h1>
       <div class="card">
@@ -291,6 +337,12 @@ Je trouve une clé USB dans le parking du bureau, que faire ?;La brancher sur mo
           <button id="lines" class="alt">Ajouter des lignes de texte</button>
         </div>
         <p class="mut">L'export contient aussi les photos. L'import remplace le quiz actuel.</p>
+        <div class="btnrow">
+          <button id="pdf" class="alt"${QZ.length ? '' : ' disabled'}>Exporter les diapos en PDF</button>
+          <label class="chk"><input type="checkbox" id="pq" checked> Diapos de question</label>
+          <label class="chk"><input type="checkbox" id="pc" checked> Diapos de correction</label>
+        </div>
+        <p class="mut">Ouvre la fenêtre d'impression : choisissez « Enregistrer au format PDF » (ou « Microsoft Print to PDF »), sans marges, avec les graphiques d'arrière-plan.</p>
         <div id="lp" hidden>
           <p class="mut">Une question par ligne : question;réponse 1;réponse 2;réponse 3;réponse 4;bonnes réponses (ex. 1,3);image (mot-clé ou https://…);explication</p>
           <textarea id="lt" placeholder="Collez vos lignes ici"></textarea>
@@ -304,6 +356,7 @@ Je trouve une clé USB dans le parking du bureau, que faire ?;La brancher sur mo
       <a class="btn" href="index.html#host" target="_blank" rel="noopener">Ouvrir le jeu pour lancer ce quiz</a>
       <p class="mut">Dans le jeu, choisissez « Utiliser le brouillon de l'éditeur » (même ordinateur et même navigateur) ou « Charger un fichier de quiz » avec le quiz exporté. Pour qu'il se charge tout seul, déposez le fichier exporté sous le nom <b>quiz.json</b> à côté de index.html.</p>`);
     paintSave();
+    $('#pdf').onclick = () => exportPdf($('#pq').checked, $('#pc').checked);
     $('#add').onclick = () => { QZ.push(blank()); saveSoon(); edit(QZ.length - 1); };
     $('#exp').onclick = () => download((slug(qTitle) || 'quiz') + '-' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify(pack(), null, 1), 'application/json');
     $('#imp').onchange = async ev => {
