@@ -1,0 +1,164 @@
+{
+ "v": 1,
+ "title": "Cybersécurité : les bons réflexes",
+ "secs": 45,
+ "q": [
+  {
+   "q": "Combien d'incidents de sécurité confirmés par l'ANSSI en France en 2025 ?",
+   "o": [
+    "83",
+    "159",
+    "1366",
+    "9568"
+   ],
+   "a": [
+    2
+   ],
+   "img": "stats",
+   "eimg": "",
+   "exp": "L'ANSSI a recensé 1 366 incidents de sécurité confirmés en 2025 en France, c'est-à-dire des cas où un acteur malveillant a réussi à agir sur le système d'information de sa victime. Elle a aussi traité 3 586 événements de sécurité, un chiffre en baisse de 22 % sur un an."
+  },
+  {
+   "q": "Quelle est la principale technique des hackers pour attaquer un système informatique ?",
+   "o": [
+    "Exploiter la confiance, les habitudes ou l'inattention des utilisateurs",
+    "Profiter d'une défaillance technique",
+    "Demander à la giir",
+    "Aucune, l'humain est uniquement bienveillant !"
+   ],
+   "a": [
+    0
+   ],
+   "img": "hacker",
+   "eimg": "",
+   "exp": "Le maillon le plus exploité reste l'humain : les attaquants jouent sur la confiance, l'habitude, l'urgence ou l'inattention (phishing, faux appels, pièces jointes piégées) plus souvent qu'ils ne cherchent une faille technique."
+  },
+  {
+   "q": "Comment se prémunir contre le phishing ?",
+   "o": [
+    "Vérifier systématiquement l'identité des expéditeurs des mails",
+    "Ne pas cliquer sur les liens ou pièces jointes suspectes",
+    "Utiliser uniquement les mails sur smartphone",
+    "Signaler sur si@moi tout mail douteux"
+   ],
+   "a": [
+    0,
+    1,
+    3
+   ],
+   "img": "hamecon",
+   "eimg": "",
+   "exp": "Vérifiez l'expéditeur, ne cliquez ni sur les liens ni sur les pièces jointes suspects, et signalez tout mail douteux sur si@moi. Lire ses mails sur smartphone ne protège pas : l'écran réduit rend même les adresses trompeuses plus difficiles à repérer."
+  },
+  {
+   "q": "Comment sécuriser ses accès informatiques ?",
+   "o": [
+    "Utiliser le même mot de passe partout",
+    "S'offrir les services d'un garde du corps",
+    "Utiliser un gestionnaire de mots de passe",
+    "Varier et utiliser des mots de passe robustes"
+   ],
+   "a": [
+    2,
+    3
+   ],
+   "img": "cadenas",
+   "eimg": "",
+   "exp": "Utilisez un mot de passe différent et robuste pour chaque service, si possible avec un gestionnaire de mots de passe. Ainsi, si un site est piraté, vos autres comptes restent protégés."
+  },
+  {
+   "q": "J'ai cliqué sur un lien frauduleux, que faire ?",
+   "o": [
+    "Éteindre tout de suite son ordinateur",
+    "Désactiver le wifi / débrancher le réseau",
+    "Se mettre en mode avion",
+    "Prévenir la giir"
+   ],
+   "a": [
+    1,
+    2,
+    3
+   ],
+   "img": "alerte",
+   "eimg": "",
+   "exp": "Coupez le réseau (débrancher le câble, désactiver le wifi ou passer en mode avion) pour stopper une éventuelle communication avec l'attaquant. N'éteignez pas l'ordinateur, car les traces utiles à l'analyse seraient perdues, puis prévenez tout de suite la GIIR."
+  },
+  {
+   "q": "Quel mot de passe est le plus robuste ?",
+   "o": [
+    "845631213448",
+    "azerty",
+    "MotDePasse2025",
+    "Tq7#vR!2mLp9"
+   ],
+   "a": [
+    3
+   ],
+   "img": "mdp",
+   "eimg": "",
+   "exp": "Un mot de passe robuste est long, imprévisible et sans lien avec vous ou votre service, avec majuscules, minuscules, chiffres et symboles. « azerty », une suite de chiffres ou « MotDePasse2025 » sont très faciles à deviner."
+  },
+  {
+   "q": "Quel matériel personnel peut-on brancher sur son portable professionnel ?",
+   "o": [
+    "Une clé USB personnelle",
+    "Un smartphone personnel pour le recharger",
+    "Un disque dur externe personnel",
+    "Une batterie externe (alimentation seule)"
+   ],
+   "a": [
+    3
+   ],
+   "img": "ordinateur",
+   "eimg": "",
+   "exp": "Aucun matériel personnel ne doit être branché sur un poste professionnel : une clé USB, un disque dur ou un smartphone peuvent introduire un virus ou faire sortir des données. Seule la batterie externe, qui ne sert qu'à l'alimentation, est admise."
+  },
+  {
+   "q": "Quels indices peuvent trahir un mail frauduleux ?",
+   "o": [
+    "Un ton d'urgence ou de menace",
+    "Une adresse d'expéditeur ou de lien qui ne correspond pas à l'organisme",
+    "Une demande de mot de passe ou d'informations confidentielles",
+    "Un message reçu un lundi matin"
+   ],
+   "a": [
+    0,
+    1,
+    2
+   ],
+   "img": "mail",
+   "eimg": "",
+   "exp": "Un mail frauduleux cherche à vous faire agir vite : ton d'urgence ou de menace, adresse d'expéditeur ou lien qui ne correspond pas à l'organisme, demande de mot de passe ou d'informations confidentielles. Le jour de réception n'est pas un indice."
+  },
+  {
+   "q": "En déplacement, comment se connecter à Internet avec son portable professionnel ?",
+   "o": [
+    "Au wifi gratuit de l'hôtel, sans protection",
+    "Au partage de connexion du smartphone professionnel",
+    "Au wifi public de la SNCF",
+    "Au wifi d'un café, en saisissant mes identifiants sur n'importe quel site"
+   ],
+   "a": [
+    1
+   ],
+   "img": "wifi",
+   "eimg": "",
+   "exp": "En déplacement, utilisez le partage de connexion de votre smartphone professionnel : vous restez sur un réseau que vous maîtrisez. Un wifi public, même officiel comme celui de la SNCF, est partagé avec des inconnus : les échanges peuvent être espionnés et un faux point d'accès peut voler vos identifiants."
+  },
+  {
+   "q": "Je trouve une clé USB dans le parking du bureau, que faire ?",
+   "o": [
+    "La brancher sur mon portable pour retrouver son propriétaire",
+    "La brancher sur mon ordinateur personnel, c'est plus prudent",
+    "La remettre à la giir sans la brancher",
+    "La garder, elle n'a pas de propriétaire"
+   ],
+   "a": [
+    2
+   ],
+   "img": "usb",
+   "eimg": "",
+   "exp": "Une clé USB trouvée peut être piégée : la brancher suffit parfois à installer un logiciel malveillant à votre insu, sur le poste professionnel comme sur un ordinateur personnel. Ne la branchez nulle part et remettez-la à la GIIR."
+  }
+ ]
+}

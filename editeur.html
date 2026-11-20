@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Éditeur de quiz</title>
+<style>
+:root{--bg:#f4f1ff;--fg:#1d1a2e;--card:#fff;--mut:#6b6785;--acc:#46178f;--ok:#1e7a08;--ko:#c4122f;--c0:#e21b3c;--c1:#1368ce;--c2:#a87400;--c3:#26890c;color-scheme:light}
+@media(prefers-color-scheme:dark){:root{--bg:#1b1530;--fg:#f4f1ff;--card:#2a2147;--mut:#b4aed0;--acc:#8b5cf6;--ok:#4ade80;--ko:#ff7a8f;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--fg);font:17px/1.4 system-ui,sans-serif;overflow-wrap:anywhere;-webkit-text-size-adjust:100%;display:flex;justify-content:center}
+main{width:100%;min-width:0;max-width:760px;padding:14px;display:flex;flex-direction:column;gap:16px}
+h1,h2,p{margin:0}
+h1{font-size:clamp(22px,6vw,32px);line-height:1.2}h2{font-size:clamp(18px,5vw,24px);line-height:1.25}
+.card{background:var(--card);border-radius:16px;padding:16px;min-width:0;display:flex;flex-direction:column;gap:12px}
+input,textarea,button{font:inherit;border-radius:12px;border:2px solid var(--mut);padding:14px;width:100%;background:var(--card);color:var(--fg)}
+textarea{min-height:220px;font-size:14px}
+button{background:var(--acc);color:#fff;border:0;font-weight:700;cursor:pointer;touch-action:manipulation;min-height:48px}
+button:disabled{opacity:.5}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid>*{min-width:0}
+.opt{min-height:96px;font-size:clamp(16px,4.6vw,21px);padding:12px;color:#fff;display:flex;align-items:center;justify-content:center;gap:10px;text-align:center}
+.o0{background:var(--c0)}.o1{background:var(--c1)}.o2{background:var(--c2)}.o3{background:var(--c3)}
+.big{font-size:clamp(32px,10vw,44px);font-weight:800;text-align:center;letter-spacing:4px}
+.mut{color:var(--mut)}.ok{color:var(--ok)}.ko{color:var(--ko)}.c{text-align:center}
+.row{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--mut)}.row span{min-width:0}
+.bar{height:28px;border-radius:6px;min-width:4px;color:#fff;padding:0 8px;line-height:28px}
+.sel{outline:5px solid var(--fg);outline-offset:2px}.sel::before{content:'✓ '}
+@media(max-width:560px){.grid{grid-template-columns:1fr}.opt{min-height:64px;justify-content:flex-start;text-align:left}}
+.qr{background:#fff;padding:10px;display:inline-block;margin:0 auto;border-radius:8px}
+.host main{max-width:1200px}
+.host h1{font-size:clamp(24px,3.2vw,44px)}
+.host .row{font-size:clamp(17px,2.1vw,28px)}
+.hq{display:flex;flex-direction:column;gap:10px}
+.host main{padding:10px 14px}.host .qcard{padding:12px 18px}.host .qcard h1{font-size:clamp(22px,2.6vw,36px)}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.top .big{font-size:clamp(24px,3.6vw,44px);letter-spacing:0;line-height:1}
+.tbar{height:14px;border-radius:7px;background:var(--card);overflow:hidden}
+.tbar i{display:block;height:100%;background:var(--c3);transform-origin:left;animation:shrink linear forwards}
+.qcard{animation:pop .5s cubic-bezier(.2,.9,.3,1.3) both}
+.pic{display:flex;justify-content:center;animation:drop .7s cubic-bezier(.2,.9,.3,1.2) .15s both}
+.pic svg{height:min(19vh,190px);width:auto;border-radius:16px;background:var(--card);padding:6px}
+.pic img{max-height:19vh;max-width:100%;border-radius:16px;object-fit:contain}
+.hopts .opt{border-radius:14px;min-height:min(10vh,90px);padding:10px 14px;font-size:clamp(16px,2vw,28px);animation:pop .5s cubic-bezier(.2,.9,.3,1.3) both;animation-delay:calc(.35s + var(--i) * .12s)}
+.hurry{color:var(--ko);animation:beat .5s ease-in-out infinite}
+.duo,.lobby{display:grid;gap:16px}
+@media(min-width:900px){.duo{grid-template-columns:3fr 2fr}.lobby{grid-template-columns:1fr 1fr}}
+.res{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;align-items:end}
+.rc{display:flex;flex-direction:column;gap:8px;min-width:0}
+.rcol{height:min(26vh,240px);display:flex;align-items:flex-end}
+.rbar{width:100%;height:var(--h);min-height:34px;border-radius:10px 10px 0 0;color:#fff;font-weight:800;font-size:clamp(18px,2.4vw,30px);text-align:center;padding-top:4px;transform-origin:bottom;animation:growY .8s cubic-bezier(.2,.9,.3,1) calc(var(--i) * .12s) both}
+.rlab{font-size:clamp(13px,1.5vw,20px);text-align:center}
+.rc.bad{opacity:.45}
+.rc.good .rbar{box-shadow:0 0 0 4px var(--ok);animation:growY .8s cubic-bezier(.2,.9,.3,1) calc(var(--i) * .12s) both,glow 1.4s ease-in-out .9s infinite}
+.rc.good .rlab{font-weight:800}
+.slide{animation:slideIn .5s ease-out both;animation-delay:calc(.5s + var(--i) * .1s)}
+.row small{font-weight:700}
+.code{animation:breathe 2.4s ease-in-out infinite}
+.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.chip{background:var(--acc);color:#fff;border-radius:999px;padding:6px 14px;font-weight:700;animation:pop .45s cubic-bezier(.2,.9,.3,1.4) both}
+.podium{display:flex;align-items:flex-end;justify-content:center;gap:12px;height:40vh;min-height:250px}
+.pcol{flex:1;max-width:240px;height:var(--h);border-radius:14px 14px 0 0;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 8px;color:#1d1a2e;text-align:center;overflow-wrap:anywhere;animation:riseY .9s cubic-bezier(.2,.9,.3,1.15) var(--d) both}
+.pcol b{font-size:clamp(16px,2.2vw,28px)}
+.pcol .medal{font-size:clamp(28px,4vw,56px)}
+.p1{background:#f5b301}.p2{background:#c3c9d4}.p3{background:#e09a5b}
+.rest{columns:2;column-gap:24px}
+.rest .row{break-inside:avoid}
+@keyframes pop{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:none}}
+@keyframes drop{from{opacity:0;transform:translateY(-30px) rotate(-3deg)}to{opacity:1;transform:none}}
+@keyframes shrink{from{transform:scaleX(1);background:var(--c3)}60%{background:#f5b301}to{transform:scaleX(0);background:var(--c0)}}
+@keyframes beat{50%{transform:scale(1.25)}}
+@keyframes breathe{50%{transform:scale(1.05)}}
+@keyframes growY{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+@keyframes glow{50%{box-shadow:0 0 0 4px var(--ok),0 0 28px 6px var(--ok)}}
+@keyframes slideIn{from{opacity:0;transform:translateX(-30px)}to{opacity:1;transform:none}}
+@keyframes riseY{from{opacity:0;transform:translateY(60vh)}to{opacity:1;transform:none}}
+.mute{position:fixed;right:10px;bottom:10px;width:auto;min-height:0;padding:8px 14px;background:var(--card);color:var(--fg);border:2px solid var(--mut);z-index:5;font-weight:600}
+.skip{position:fixed;left:10px;bottom:10px;width:auto;min-height:0;padding:8px 14px;background:var(--card);color:var(--fg);border:2px solid var(--mut);z-index:5;font-weight:600}
+.good-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.good-tiles .opt{border-radius:14px;min-height:min(10vh,90px);padding:10px 14px;font-size:clamp(16px,2vw,28px);box-shadow:0 0 0 4px var(--ok);animation:pop .5s cubic-bezier(.2,.9,.3,1.3) calc(var(--i) * .15s) both}
+.exrow{display:grid;gap:12px;align-items:center}
+@media(min-width:900px){.exrow.has-pic{grid-template-columns:auto 1fr}}
+.exrow .pic svg{height:min(16vh,160px)}.exrow .pic img{height:auto;max-height:22vh}
+.expl{animation:slideIn .6s ease-out .3s both}
+.expl p{font-size:clamp(17px,2.1vw,27px);line-height:1.4}
+.btnrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.alt{background:var(--card);color:var(--fg);border:2px solid var(--mut)}
+[hidden]{display:none!important}
+.multi{display:flex;flex-direction:column;align-items:center;gap:2px;background:var(--acc);color:#fff;border-radius:12px;padding:8px 16px;font-weight:800;font-size:clamp(16px,2.2vw,28px);text-align:center;animation:pop .5s cubic-bezier(.2,.9,.3,1.3) .4s both}
+.multi small{font-weight:600;font-size:.62em}
+.qcard .multi{align-self:flex-start}
+.multi.mc{align-self:center;font-size:clamp(15px,1.8vw,22px)}
+input[type=checkbox]{width:24px;height:24px;padding:0;flex:none;accent-color:var(--acc)}
+.btn{display:flex;align-items:center;justify-content:center;min-height:48px;border-radius:12px;font-weight:700;cursor:pointer;padding:0 14px;text-align:center}
+textarea.short{min-height:90px;font-size:17px}
+.qrow{flex-direction:row;align-items:center;gap:12px;flex-wrap:wrap}
+.qthumb{width:90px;height:60px;display:flex;align-items:center;justify-content:center;flex:none}
+.qthumb svg{width:84px;height:auto}.qthumb img{max-height:56px;max-width:90px;border-radius:8px;object-fit:contain}
+.qmeta{display:flex;flex-direction:column;gap:2px;flex:1;min-width:200px}
+.qact{display:flex;gap:6px;flex-wrap:wrap}
+.qact button{width:auto;min-height:40px;padding:6px 12px}
+.arow{display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:center}
+.arow .tag{min-height:44px;width:44px;border-radius:10px;padding:0;font-size:20px}
+.chk{display:flex;align-items:center;gap:8px;font-weight:600;white-space:nowrap}
+@media(max-width:560px){.arow{grid-template-columns:44px 1fr}.arow .chk{grid-column:2}}
+.pk{display:flex;flex-direction:column;gap:10px}
+.pkprev{min-height:120px;display:flex;align-items:center;justify-content:center;background:var(--bg);border-radius:12px;padding:8px}
+.pkprev svg{height:110px;width:auto}.pkprev img{max-height:200px;max-width:100%;border-radius:10px}
+.pkgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px}
+.thumb{padding:4px;min-height:0}.thumb svg{width:100%;height:auto}.thumb.on{outline:3px solid var(--acc)}
+.msg{background:var(--card);border-left:6px solid var(--ko);border-radius:12px;padding:12px 16px}
+.ov{position:fixed;inset:0;z-index:30;overflow:auto;background:var(--bg)}
+.ovbar{display:flex;gap:12px;align-items:center;padding:10px 14px;position:sticky;top:0;background:var(--bg);z-index:2}.ovbar button{width:auto}
+.stage{width:100%;max-width:1200px;margin:0 auto;padding:10px 14px;display:flex;flex-direction:column;gap:16px}
+.pic img{max-height:22vh}
+.hq{height:calc(100vh - 20px)}
+.stage .hq{height:calc(100vh - 100px)}
+.hq .pic{flex:1 1 0;min-height:90px;min-width:0;align-items:center}
+.hq .pic svg{height:100%;max-height:300px;width:auto}
+.hq .pic img{height:100%;max-height:none;width:auto;max-width:100%}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script>
+const SHAPES = ['▲','◆','●','■'];
+const $ = s => document.querySelector(s);
+const app = $('#app');
+const render = h => { app.innerHTML = h; };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ================= ILLUSTRATIONS ================= */
+const IMGS = {
+  stats: '<rect x="30" y="82" width="26" height="40" rx="5" fill="#1368ce"/><rect x="68" y="62" width="26" height="60" rx="5" fill="#26890c"/><rect x="106" y="42" width="26" height="80" rx="5" fill="#f5a800"/><rect x="144" y="20" width="26" height="102" rx="5" fill="#e21b3c"/><path d="M20 128h160" stroke="#6b6785" stroke-width="5" stroke-linecap="round"/>',
+  hacker: '<path d="M52 126C52 60 72 30 100 30s48 30 48 96z" fill="#2a2147"/><ellipse cx="100" cy="72" rx="26" ry="28" fill="#0e0a1f"/><circle cx="90" cy="72" r="5" fill="#4ade80"/><circle cx="110" cy="72" r="5" fill="#4ade80"/><rect x="66" y="108" width="68" height="22" rx="4" fill="#6b6785"/><rect x="72" y="112" width="56" height="12" rx="2" fill="#4ade80"/>',
+  hamecon: '<rect x="24" y="52" width="92" height="64" rx="8" fill="#ffffff" stroke="#46178f" stroke-width="5"/><path d="M28 58l42 32 42-32" fill="none" stroke="#46178f" stroke-width="5" stroke-linejoin="round"/><path d="M152 8V86a22 22 0 0 1-44 0v-8" fill="none" stroke="#e21b3c" stroke-width="7" stroke-linecap="round"/><path d="M108 78l-8 10" stroke="#e21b3c" stroke-width="7" stroke-linecap="round"/>',
+  cadenas: '<path d="M68 72V52a32 32 0 0 1 64 0v20" fill="none" stroke="#6b6785" stroke-width="12" stroke-linecap="round"/><rect x="50" y="70" width="100" height="62" rx="12" fill="#46178f"/><circle cx="100" cy="96" r="9" fill="#fff"/><rect x="96" y="100" width="8" height="18" rx="4" fill="#fff"/>',
+  alerte: '<path d="M100 18L174 122H26z" fill="#f5a800" stroke="#f5a800" stroke-width="10" stroke-linejoin="round"/><rect x="93" y="54" width="14" height="38" rx="7" fill="#1d1a2e"/><circle cx="100" cy="106" r="8" fill="#1d1a2e"/>',
+  mdp: '<rect x="16" y="30" width="168" height="48" rx="12" fill="#ffffff" stroke="#46178f" stroke-width="5"/><circle cx="46" cy="54" r="7" fill="#1d1a2e"/><circle cx="72" cy="54" r="7" fill="#1d1a2e"/><circle cx="98" cy="54" r="7" fill="#1d1a2e"/><circle cx="124" cy="54" r="7" fill="#1d1a2e"/><circle cx="150" cy="54" r="7" fill="#1d1a2e"/><circle cx="62" cy="108" r="14" fill="none" stroke="#f5a800" stroke-width="8"/><path d="M76 108h64m-16 0v14m-16-14v10" fill="none" stroke="#f5a800" stroke-width="8" stroke-linecap="round"/>',
+  ordinateur: '<rect x="36" y="20" width="128" height="82" rx="9" fill="#2a2147"/><rect x="46" y="30" width="108" height="62" rx="4" fill="#1368ce"/><path d="M20 106h160l-12 18H32z" fill="#6b6785"/><path d="M164 114h14" stroke="#e21b3c" stroke-width="7" stroke-linecap="round"/><rect x="176" y="104" width="16" height="20" rx="4" fill="#e21b3c"/>',
+  mail: '<rect x="22" y="36" width="112" height="76" rx="9" fill="#ffffff" stroke="#46178f" stroke-width="5"/><path d="M26 42l52 40 52-40" fill="none" stroke="#46178f" stroke-width="5" stroke-linejoin="round"/><circle cx="138" cy="92" r="26" fill="#ffffff" fill-opacity=".85" stroke="#e21b3c" stroke-width="8"/><path d="M158 112l22 22" stroke="#e21b3c" stroke-width="11" stroke-linecap="round"/>',
+  wifi: '<path d="M30 60a100 100 0 0 1 140 0" fill="none" stroke="#1368ce" stroke-width="12" stroke-linecap="round"/><path d="M55 84a65 65 0 0 1 90 0" fill="none" stroke="#1368ce" stroke-width="12" stroke-linecap="round"/><path d="M80 108a30 30 0 0 1 40 0" fill="none" stroke="#1368ce" stroke-width="12" stroke-linecap="round"/><circle cx="100" cy="124" r="9" fill="#1368ce"/>',
+  usb: '<rect x="30" y="50" width="96" height="50" rx="9" fill="#26890c"/><rect x="126" y="60" width="46" height="30" rx="3" fill="#cfd2dc"/><rect x="136" y="68" width="10" height="6" fill="#6b6785"/><rect x="136" y="78" width="10" height="6" fill="#6b6785"/><circle cx="52" cy="75" r="8" fill="#fff"/>'
+};
+const norm = s => String(s || '').trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+function picHtml(k) {
+  const key = norm(k), raw = String(k || '').trim();
+  if (!key) return '';
+  if (IMGS[key]) return `<svg viewBox="0 0 200 140" aria-hidden="true">${IMGS[key]}</svg>`;
+  if (/^data:image\/(png|jpe?g|webp|gif);base64,[A-Za-z0-9+/=]+$/i.test(raw) || /^https?:\/\//i.test(raw) || /^[\w\-./]+\.(png|jpe?g|gif|webp|svg)$/i.test(raw))
+    return `<img src="${esc(raw)}" alt="" onerror="this.parentNode.remove()">`;
+  return '';
+}
+
+const nl = s => esc(s).replace(/\n/g, '<br>');
+
+// Photo choisie par l'animateur : réduite (1000 px max) et enregistrée en JPEG dans le quiz.
+function readPhoto(file) {
+  return new Promise((res, rej) => {
+    const fr = new FileReader();
+    fr.onerror = () => rej(fr.error);
+    fr.onload = () => {
+      const im = new Image();
+      im.onerror = () => rej(new Error('illisible'));
+      im.onload = () => {
+        const r = Math.min(1, 1000 / Math.max(im.naturalWidth, im.naturalHeight));
+        const w = Math.max(1, Math.round(im.naturalWidth * r)), h = Math.max(1, Math.round(im.naturalHeight * r));
+        const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+        const c = cv.getContext('2d'); c.fillStyle = '#fff'; c.fillRect(0, 0, w, h); c.drawImage(im, 0, 0, w, h);
+        res(cv.toDataURL('image/jpeg', .8));
+      };
+      im.src = fr.result;
+    };
+    fr.readAsDataURL(file);
+  });
+}
+function download(name, text, type) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type }));
+  a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+
+// Diapos projetées (aussi utilisées pour les aperçus de l'éditeur)
+const multiBadge = '<div class="multi">☑ Plusieurs bonnes réponses possibles</div>';
+function slideQ(q, i, n, secs) {
+  const pic = picHtml(q.img);
+  return `<div class="hq">
+    <div class="top"><span class="mut">Question ${i + 1} sur ${n}</span>${secs ? `<span class="big" id="tm">${secs}</span>` : ''}</div>
+    ${secs ? `<div class="tbar"><i style="animation-duration:${secs}s"></i></div>` : ''}
+    <div class="card qcard"><h1>${esc(q.q)}</h1>${q.a.length > 1 ? multiBadge : ''}</div>
+    ${pic ? `<div class="pic">${pic}</div>` : ''}
+    <div class="grid hopts">${q.o.map((t, k) => `<div class="opt o${k}" style="--i:${k}">${SHAPES[k]} ${esc(t)}</div>`).join('')}</div>
+    ${secs ? '<p class="c mut" id="cnt"></p><button class="skip" id="skip">Terminer maintenant</button>' : ''}</div>`;
+}
+function slideExpl(q, i, n) {
+  const pic = picHtml(q.eimg || q.img);
+  return `<p class="mut">Question ${i + 1} sur ${n}</p>
+    <div class="card"><p class="mut">${esc(q.q)}</p></div>
+    <h2 class="c">${q.a.length > 1 ? 'Bonnes réponses' : 'Bonne réponse'}</h2>
+    ${q.a.length > 1 ? '<div class="multi mc">☑ Question à plusieurs bonnes réponses</div>' : ''}
+    <div class="good-tiles">${q.a.map((k, m) => `<div class="opt o${k}" style="--i:${m}">${SHAPES[k]} ${esc(q.o[k])}</div>`).join('')}</div>
+    <div class="exrow${pic ? ' has-pic' : ''}">${pic ? `<div class="pic">${pic}</div>` : ''}<div class="card expl"><h2>Pourquoi ?</h2><p>${nl(q.exp)}</p></div></div>`;
+}
+
+const SAMPLE = `Combien d'incidents de sécurité confirmés par l'ANSSI en France en 2025 ?;83;159;1366;9568;3;stats;L'ANSSI a recensé 1 366 incidents de sécurité confirmés en 2025 en France, c'est-à-dire des cas où un acteur malveillant a réussi à agir sur le système d'information de sa victime. Elle a aussi traité 3 586 événements de sécurité, un chiffre en baisse de 22 % sur un an.
+Quelle est la principale technique des hackers pour attaquer un système informatique ?;Exploiter la confiance, les habitudes ou l'inattention des utilisateurs;Profiter d'une défaillance technique;Demander à la giir;Aucune, l'humain est uniquement bienveillant !;1;hacker;Le maillon le plus exploité reste l'humain : les attaquants jouent sur la confiance, l'habitude, l'urgence ou l'inattention (phishing, faux appels, pièces jointes piégées) plus souvent qu'ils ne cherchent une faille technique.
+Comment se prémunir contre le phishing ?;Vérifier systématiquement l'identité des expéditeurs des mails;Ne pas cliquer sur les liens ou pièces jointes suspectes;Utiliser uniquement les mails sur smartphone;Signaler sur si@moi tout mail douteux;1,2,4;hamecon;Vérifiez l'expéditeur, ne cliquez ni sur les liens ni sur les pièces jointes suspects, et signalez tout mail douteux sur si@moi. Lire ses mails sur smartphone ne protège pas : l'écran réduit rend même les adresses trompeuses plus difficiles à repérer.
+Comment sécuriser ses accès informatiques ?;Utiliser le même mot de passe partout;S'offrir les services d'un garde du corps;Utiliser un gestionnaire de mots de passe;Varier et utiliser des mots de passe robustes;3,4;cadenas;Utilisez un mot de passe différent et robuste pour chaque service, si possible avec un gestionnaire de mots de passe. Ainsi, si un site est piraté, vos autres comptes restent protégés.
+J'ai cliqué sur un lien frauduleux, que faire ?;Éteindre tout de suite son ordinateur;Désactiver le wifi / débrancher le réseau;Se mettre en mode avion;Prévenir la giir;2,3,4;alerte;Coupez le réseau (débrancher le câble, désactiver le wifi ou passer en mode avion) pour stopper une éventuelle communication avec l'attaquant. N'éteignez pas l'ordinateur, car les traces utiles à l'analyse seraient perdues, puis prévenez tout de suite la GIIR.
+Quel mot de passe est le plus robuste ?;845631213448;azerty;MotDePasse2025;Tq7#vR!2mLp9;4;mdp;Un mot de passe robuste est long, imprévisible et sans lien avec vous ou votre service, avec majuscules, minuscules, chiffres et symboles. « azerty », une suite de chiffres ou « MotDePasse2025 » sont très faciles à deviner.
+Quel matériel personnel peut-on brancher sur son portable professionnel ?;Une clé USB personnelle;Un smartphone personnel pour le recharger;Un disque dur externe personnel;Une batterie externe (alimentation seule);4;ordinateur;Aucun matériel personnel ne doit être branché sur un poste professionnel : une clé USB, un disque dur ou un smartphone peuvent introduire un virus ou faire sortir des données. Seule la batterie externe, qui ne sert qu'à l'alimentation, est admise.
+Quels indices peuvent trahir un mail frauduleux ?;Un ton d'urgence ou de menace;Une adresse d'expéditeur ou de lien qui ne correspond pas à l'organisme;Une demande de mot de passe ou d'informations confidentielles;Un message reçu un lundi matin;1,2,3;mail;Un mail frauduleux cherche à vous faire agir vite : ton d'urgence ou de menace, adresse d'expéditeur ou lien qui ne correspond pas à l'organisme, demande de mot de passe ou d'informations confidentielles. Le jour de réception n'est pas un indice.
+En déplacement, comment se connecter à Internet avec son portable professionnel ?;Au wifi gratuit de l'hôtel, sans protection;Au partage de connexion du smartphone professionnel;Au wifi public de la SNCF;Au wifi d'un café, en saisissant mes identifiants sur n'importe quel site;2;wifi;En déplacement, utilisez le partage de connexion de votre smartphone professionnel : vous restez sur un réseau que vous maîtrisez. Un wifi public, même officiel comme celui de la SNCF, est partagé avec des inconnus : les échanges peuvent être espionnés et un faux point d'accès peut voler vos identifiants.
+Je trouve une clé USB dans le parking du bureau, que faire ?;La brancher sur mon portable pour retrouver son propriétaire;La brancher sur mon ordinateur personnel, c'est plus prudent;La remettre à la giir sans la brancher;La garder, elle n'a pas de propriétaire;3;usb;Une clé USB trouvée peut être piégée : la brancher suffit parfois à installer un logiciel malveillant à votre insu, sur le poste professionnel comme sur un ordinateur personnel. Ne la branchez nulle part et remettez-la à la GIIR.`;
+
+(function () {
+  /* ---------- Éditeur de quiz ---------- */
+  const STORE_KEY = 'quizdata-v1';
+  const idb = () => new Promise((res, rej) => {
+    if (!window.indexedDB) return rej(new Error('pas de base locale'));
+    const r = indexedDB.open('quizdb', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('kv');
+    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+  });
+  const kvGet = async k => {
+    try { const d = await idb(); return await new Promise((res, rej) => { const q = d.transaction('kv').objectStore('kv').get(k); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); }); }
+    catch (e) { try { return localStorage.getItem(k); } catch (e2) { return null; } }
+  };
+  const kvSet = async (k, v) => {
+    try { const d = await idb(); await new Promise((res, rej) => { const t = d.transaction('kv', 'readwrite'); t.objectStore('kv').put(v, k); t.oncomplete = res; t.onerror = () => rej(t.error); t.onabort = () => rej(t.error); }); return true; }
+    catch (e) { try { localStorage.setItem(k, v); return true; } catch (e2) { return false; } }
+  };
+
+  const blank = () => ({ q: '', o: ['', '', '', ''], a: [], img: '', eimg: '', exp: '' });
+  const normQ = x => ({
+    q: String(x.q || ''), o: [0, 1, 2, 3].map(k => String((x.o || [])[k] || '')),
+    a: [...new Set((x.a || []).map(Number).filter(k => k >= 0 && k <= 3))].sort(),
+    img: String(x.img || ''), eimg: String(x.eimg || ''), exp: String(x.exp || '') });
+  const parseLines = text => text.split('\n').map(l => l.trim()).filter(Boolean).map(l => {
+    const p = l.split(';').map(x => x.trim());
+    return normQ({ q: p[0], o: p.slice(1, 5), a: [...new Set((p[5] || '').match(/[1-4]/g) || [])].map(x => x - 1), img: p[6] || '', exp: p.slice(7).join(';') });
+  });
+  const clampSecs = v => Math.min(120, Math.max(5, parseInt(v, 10) || 45));
+  const problem = q => !q.q.trim() ? 'la question est vide' : q.o.some(x => !x.trim()) ? 'une réponse est vide' : !q.a.length ? 'aucune bonne réponse cochée' : '';
+  let QZ = [], dSecs = 45, qTitle = '', saveState = '', saveT;
+  const pack = () => ({ v: 1, title: qTitle, secs: dSecs, q: QZ });
+  const slug = t => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
+
+  async function loadQuiz() {
+    let d = null;
+    try { d = JSON.parse(await kvGet(STORE_KEY)); } catch (e) {}
+    if (d && Array.isArray(d.q) && d.q.length) { QZ = d.q.map(normQ); dSecs = clampSecs(d.secs); qTitle = String(d.title || ''); }
+    else QZ = parseLines(SAMPLE);
+  }
+  function paintSave() {
+    const el = $('#sv'); if (!el) return;
+    el.textContent = saveState === 'ok' ? '✓ Enregistré dans ce navigateur' : saveState === 'ko' ? '⚠ Enregistrement impossible : pensez à exporter le quiz' : saveState ? 'Enregistrement…' : '';
+  }
+  async function saveNow() { saveState = (await kvSet(STORE_KEY, JSON.stringify(pack()))) ? 'ok' : 'ko'; paintSave(); }
+  function saveSoon() { saveState = '…'; paintSave(); clearTimeout(saveT); saveT = setTimeout(saveNow, 400); }
+  const msg = (t, ok) => {
+    const el = $('#msg'); if (!el) return;
+    el.hidden = !t; el.innerHTML = t || ''; el.style.borderLeftColor = ok ? 'var(--ok)' : 'var(--ko)';
+    if (t) el.scrollIntoView({ block: 'nearest' });
+  };
+
+  const qrow = (q, k) => {
+    const pb = problem(q);
+    return `<div class="card qrow" data-k="${k}">
+      <div class="qthumb">${picHtml(q.img) || '<span class="mut">—</span>'}</div>
+      <div class="qmeta"><b>${k + 1}. ${q.q.trim() ? esc(q.q) : '<span class="ko">(question vide)</span>'}</b>
+        <span class="mut">${q.a.length > 1 ? '☑ ' + q.a.length + ' bonnes réponses' : q.a.length === 1 ? '1 bonne réponse' : ''}${q.exp ? ' · avec explication' : ''}</span>
+        ${pb ? `<span class="ko">⚠ ${pb}</span>` : ''}</div>
+      <div class="qact"><button class="alt" data-act="edit">Modifier</button>
+        <button class="alt" data-act="up" aria-label="Monter"${k === 0 ? ' disabled' : ''}>↑</button>
+        <button class="alt" data-act="down" aria-label="Descendre"${k === QZ.length - 1 ? ' disabled' : ''}>↓</button>
+        <button class="alt" data-act="dup" aria-label="Dupliquer">⧉</button>
+        <button class="alt" data-act="del" aria-label="Supprimer">🗑</button></div></div>`;
+  };
+
+  function home() {
+    render(`<h1>Éditeur de quiz</h1>
+      <div class="card">
+        <label>Titre du quiz<input id="qt" value="${esc(qTitle)}" maxlength="80" placeholder="Ex. Cybersécurité : les bons réflexes"></label>
+        <div class="btnrow">
+          <button id="add">+ Ajouter une question</button>
+          <button id="exp" class="alt">Exporter le quiz</button>
+          <label class="btn alt">Importer un quiz<input id="imp" type="file" accept=".json,application/json" hidden></label>
+          <button id="lines" class="alt">Ajouter des lignes de texte</button>
+        </div>
+        <p class="mut">L'export contient aussi les photos. L'import remplace le quiz actuel.</p>
+        <div id="lp" hidden>
+          <p class="mut">Une question par ligne : question;réponse 1;réponse 2;réponse 3;réponse 4;bonnes réponses (ex. 1,3);image (mot-clé ou https://…);explication</p>
+          <textarea id="lt" placeholder="Collez vos lignes ici"></textarea>
+          <button id="la">Ajouter ces questions</button>
+        </div>
+        <label>Temps par question (secondes)<input id="dsecs" type="number" value="${dSecs}" min="5" max="120"></label>
+        <p class="mut" id="sv"></p>
+      </div>
+      <div id="msg" class="msg" role="status" hidden></div>
+      <div id="list">${QZ.length ? QZ.map(qrow).join('') : '<p class="mut c">Aucune question pour le moment : ajoutez-en une.</p>'}</div>
+      <a class="btn" href="index.html#host" target="_blank" rel="noopener">Ouvrir le jeu pour lancer ce quiz</a>
+      <p class="mut">Dans le jeu, choisissez « Utiliser le brouillon de l'éditeur » (même ordinateur et même navigateur) ou « Charger un fichier de quiz » avec le quiz exporté. Pour qu'il se charge tout seul, déposez le fichier exporté sous le nom <b>quiz.json</b> à côté de index.html.</p>`);
+    paintSave();
+    $('#add').onclick = () => { QZ.push(blank()); saveSoon(); edit(QZ.length - 1); };
+    $('#exp').onclick = () => download((slug(qTitle) || 'quiz') + '-' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify(pack(), null, 1), 'application/json');
+    $('#imp').onchange = async ev => {
+      const f = ev.target.files[0]; if (!f) return;
+      try {
+        const d = JSON.parse(await f.text()), arr = Array.isArray(d) ? d : d.q;
+        if (!Array.isArray(arr) || !arr.length) throw new Error('vide');
+        QZ = arr.map(normQ); if (d.secs) dSecs = clampSecs(d.secs); qTitle = String(d.title || '');
+        saveSoon(); home(); msg('Quiz importé : ' + QZ.length + ' questions.', true);
+      } catch (e) { msg('Fichier illisible : choisissez un quiz exporté depuis cet éditeur (.json).'); }
+    };
+    $('#lines').onclick = () => { $('#lp').hidden = !$('#lp').hidden; };
+    $('#la').onclick = () => {
+      const add = parseLines($('#lt').value);
+      if (!add.length) return msg('Aucune ligne à ajouter.');
+      QZ.push(...add); saveSoon(); home(); msg(add.length + ' question(s) ajoutée(s).', true);
+    };
+    $('#dsecs').oninput = e => { dSecs = clampSecs(e.target.value); saveSoon(); };
+    $('#list').onclick = e => {
+      const b = e.target.closest('button[data-act]'); if (!b) return;
+      const k = +b.closest('.qrow').dataset.k, act = b.dataset.act;
+      if (act === 'edit') return edit(k);
+      if (act === 'up' && k > 0) { [QZ[k - 1], QZ[k]] = [QZ[k], QZ[k - 1]]; }
+      else if (act === 'down' && k < QZ.length - 1) { [QZ[k + 1], QZ[k]] = [QZ[k], QZ[k + 1]]; }
+      else if (act === 'dup') { QZ.splice(k + 1, 0, normQ(JSON.parse(JSON.stringify(QZ[k])))); }
+      else if (act === 'del') {
+        if (b.dataset.armed !== '1') {
+          b.dataset.armed = '1'; b.textContent = 'Confirmer ?';
+          setTimeout(() => { if (b.isConnected) { b.dataset.armed = ''; b.textContent = '🗑'; } }, 3000);
+          return;
+        }
+        QZ.splice(k, 1);
+      } else return;
+      saveSoon(); home();
+    };
+    $('#qt').oninput = e => { qTitle = e.target.value; saveSoon(); };
+  }
+
+  function picker(el, get, set, noneLabel) {
+    const draw = () => {
+      const v = get(), key = norm(v);
+      el.innerHTML = `<div class="pk">
+        <div class="pkprev">${picHtml(v) || `<span class="mut">${esc(noneLabel || 'Aucune image')}</span>`}</div>
+        <div class="btnrow">
+          <label class="btn alt">📷 Choisir une photo<input type="file" accept="image/*" hidden></label>
+          <button class="alt" data-x="none"${v ? '' : ' disabled'}>Retirer l'image</button></div>
+        <p class="mut">Ou une illustration :</p>
+        <div class="pkgrid">${Object.keys(IMGS).map(k => `<button class="alt thumb${key === k ? ' on' : ''}" data-k="${k}" title="${k}" aria-label="${k}"><svg viewBox="0 0 200 140" aria-hidden="true">${IMGS[k]}</svg></button>`).join('')}</div>
+        <input type="url" class="pkurl" placeholder="… ou adresse d'une image (https://…)" value="${/^https?:\/\//i.test(v) ? esc(v) : ''}">
+        <p class="mut pkerr" role="status"></p></div>`;
+      const err = t => { el.querySelector('.pkerr').textContent = t; };
+      el.querySelector('input[type=file]').onchange = async ev => {
+        const f = ev.target.files[0]; if (!f) return;
+        try { set(await readPhoto(f)); draw(); } catch (e) { err('Image illisible : essayez un fichier JPEG ou PNG.'); }
+      };
+      el.querySelector('[data-x=none]').onclick = () => { set(''); draw(); };
+      el.querySelectorAll('[data-k]').forEach(b => { b.onclick = () => { set(b.dataset.k); draw(); }; });
+      el.querySelector('.pkurl').onchange = ev => {
+        const u = ev.target.value.trim(); if (!u) return;
+        if (/^https?:\/\//i.test(u)) { set(u); draw(); } else err("L'adresse doit commencer par https://");
+      };
+    };
+    draw();
+  }
+
+  function previewSlide(html) {
+    const ov = document.createElement('div'); ov.className = 'ov';
+    ov.innerHTML = `<div class="ovbar"><button class="alt" id="ovx">✕ Fermer l'aperçu</button><span class="mut">Aperçu tel qu'il sera projeté</span></div><div class="stage">${html}</div>`;
+    document.body.appendChild(ov);
+    ov.querySelector('#ovx').onclick = () => ov.remove();
+  }
+
+  function edit(k) {
+    const q = QZ[k];
+    render(`<div class="btnrow"><button id="bk" class="alt">← Retour à la liste</button><span class="mut c" id="sv"></span></div>
+      <h1>Question ${k + 1} sur ${QZ.length}</h1>
+      <div class="card"><label>Question<textarea id="eq" class="short" maxlength="300">${esc(q.q)}</textarea></label></div>
+      <div class="card"><h2>Réponses</h2>
+        <p class="mut">Cochez la ou les bonnes réponses. Si vous en cochez plusieurs, la diapo indique « Plusieurs bonnes réponses possibles ».</p>
+        ${q.o.map((t, j) => `<div class="arow"><span class="opt o${j} tag">${SHAPES[j]}</span><input class="ai" data-j="${j}" value="${esc(t)}" placeholder="Réponse ${j + 1}" maxlength="160"><label class="chk"><input type="checkbox" class="ac" data-j="${j}"${q.a.includes(j) ? ' checked' : ''}> Bonne réponse</label></div>`).join('')}
+        <p id="mh"></p></div>
+      <div class="card"><h2>Illustration de la question</h2><div id="pk1"></div></div>
+      <div class="card"><h2>Page d'explication</h2>
+        <label>Texte affiché sous « Pourquoi ? » (facultatif : sans texte, le bouton n'apparaît pas)<textarea id="ee" class="short" rows="5">${esc(q.exp)}</textarea></label>
+        <h2>Image de l'explication</h2><div id="pk2"></div></div>
+      <div class="btnrow"><button id="pq" class="alt">Aperçu de la question</button><button id="pe" class="alt">Aperçu de l'explication</button></div>
+      <div class="btnrow"><button id="done">Terminé</button><button id="rm" class="alt">Supprimer cette question</button></div>`);
+    const hint = () => { $('#mh').textContent = q.a.length > 1 ? '☑ Plusieurs bonnes réponses : la question sera signalée sur la diapo et sur les téléphones, et il faut cocher exactement les bonnes réponses pour marquer des points.' : q.a.length === 1 ? 'Une seule bonne réponse : les joueurs répondent d\'un seul toucher.' : '⚠ Cochez au moins une bonne réponse.'; $('#mh').className = q.a.length ? 'mut' : 'ko'; };
+    hint(); paintSave();
+    $('#eq').oninput = e => { q.q = e.target.value; saveSoon(); };
+    app.querySelectorAll('.ai').forEach(el => { el.oninput = () => { q.o[+el.dataset.j] = el.value; saveSoon(); }; });
+    app.querySelectorAll('.ac').forEach(el => {
+      el.onchange = () => { const j = +el.dataset.j; q.a = el.checked ? [...new Set([...q.a, j])].sort() : q.a.filter(x => x !== j); hint(); saveSoon(); };
+    });
+    $('#ee').oninput = e => { q.exp = e.target.value; saveSoon(); };
+    picker($('#pk1'), () => q.img, v => { q.img = v; saveSoon(); });
+    picker($('#pk2'), () => q.eimg, v => { q.eimg = v; saveSoon(); }, "Même image que la question");
+    $('#pq').onclick = () => previewSlide(slideQ(q, k, QZ.length, 0));
+    $('#pe').onclick = () => previewSlide(slideExpl(q, k, QZ.length));
+    const back = () => { clearTimeout(saveT); saveNow(); home(); };
+    $('#bk').onclick = back; $('#done').onclick = back;
+    $('#rm').onclick = () => {
+      const b = $('#rm');
+      if (b.dataset.armed !== '1') { b.dataset.armed = '1'; b.textContent = 'Confirmer la suppression ?'; setTimeout(() => { if (b.isConnected) { b.dataset.armed = ''; b.textContent = 'Supprimer cette question'; } }, 3000); return; }
+      QZ.splice(k, 1); clearTimeout(saveT); saveNow(); home();
+    };
+  }
+
+  document.body.classList.add('host');
+  loadQuiz().then(home);
+})();
+</script>
+</body>
+</html>
