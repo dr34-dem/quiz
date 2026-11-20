@@ -138,11 +138,11 @@ textarea.short{min-height:90px;font-size:17px}
 .pg .exrow .pic svg{height:170px}.pg .exrow .pic img{height:auto;max-height:230px;max-width:420px}
 .pg .expl p{font-size:25px}
 .pg .cx{justify-content:center;gap:20px}.pg .cx>.mut{font-size:20px}.pg .cx>.card .mut{font-size:24px;color:#1d1a2e}.pg .cx .exrow .pic img{max-height:260px}.pg .cx .expl p{font-size:27px}
-@page{size:1280px 720px;margin:0}
+@page{size:A4 landscape;margin:0}
 @media print{
   html,body{background:#fff!important;display:block;min-height:0}
   body>main,.ov{display:none!important}
-  #pr{position:static;left:auto}
+  #pr{position:static;left:auto;zoom:.87}
 }
 </style>
 </head>
@@ -306,6 +306,10 @@ Je trouve une clé USB dans le parking du bureau, que faire ?;La brancher sur mo
         <button class="alt" data-act="del" aria-label="Supprimer">🗑</button></div></div>`;
   };
 
+  const loadLib = (url, test) => new Promise((res, rej) => {
+    if (test()) return res();
+    const sc = document.createElement('script'); sc.src = url; sc.onload = () => test() ? res() : rej(); sc.onerror = rej; document.head.appendChild(sc);
+  });
   async function exportPdf(wantQ, wantC) {
     if (!wantQ && !wantC) return msg('Cochez au moins un type de diapo.');
     const box = $('#pr'); box.innerHTML = '';
@@ -317,13 +321,33 @@ Je trouve une clé USB dans le parking du bureau, que faire ?;La brancher sur mo
     await Promise.all([...box.querySelectorAll('img')].map(i => i.decode ? i.decode().catch(() => {}) : 0));
     box.querySelectorAll('.pg').forEach(pg => {
       const inn = pg.firstChild; let z = 1;
-      while (z > 0.5 && inn.scrollHeight > 721) { z -= 0.05; inn.style.zoom = z; }
-      inn.style.height = (720 / z) + 'px';
+      while (z > 0.5 && inn.scrollHeight > 721 / z) {
+        z -= 0.05; inn.style.width = (1280 / z) + 'px'; inn.style.height = (720 / z) + 'px'; inn.style.transform = 'scale(' + z + ')';
+      }
     });
-    const done = () => { box.innerHTML = ''; removeEventListener('afterprint', done); };
-    addEventListener('afterprint', done);
-    document.title = slug(qTitle) || 'quiz';
-    setTimeout(() => window.print(), 150);
+    const name = (slug(qTitle) || 'quiz') + '-diapos';
+    try {
+      msg('Création du PDF…', true);
+      await loadLib('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js', () => window.jspdf && window.jspdf.jsPDF);
+      await loadLib('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js', () => window.html2canvas);
+      const pgs = [...box.querySelectorAll('.pg')];
+      const pdf = new window.jspdf.jsPDF({ orientation: 'landscape', unit: 'px', format: [1280, 720], hotfix: ['px_scaling'], compress: true });
+      for (let k = 0; k < pgs.length; k++) {
+        msg('Création du PDF : diapo ' + (k + 1) + ' sur ' + pgs.length + '…', true);
+        const cv = await window.html2canvas(pgs[k], { scale: 1.5, backgroundColor: '#f4f1ff', width: 1280, height: 720, windowWidth: 1280, logging: false,
+          onclone: d => { const r = d.getElementById('pr'); r.style.left = '0'; r.style.position = 'absolute'; } });
+        if (k) pdf.addPage([1280, 720], 'landscape');
+        pdf.addImage(cv.toDataURL('image/jpeg', 0.9), 'JPEG', 0, 0, 1280, 720);
+      }
+      pdf.save(name + '.pdf');
+      msg('PDF téléchargé : ' + pgs.length + ' diapos.', true);
+      box.innerHTML = '';
+    } catch (e) {
+      msg('Création directe du PDF impossible (connexion Internet requise). La fenêtre d\'impression va s\'ouvrir : choisissez « Enregistrer au format PDF », format « Paysage », échelle « Ajuster à la page ».');
+      const done = () => { box.innerHTML = ''; removeEventListener('afterprint', done); };
+      addEventListener('afterprint', done); document.title = name;
+      setTimeout(() => window.print(), 600);
+    }
   }
 
   function home() {
@@ -338,11 +362,11 @@ Je trouve une clé USB dans le parking du bureau, que faire ?;La brancher sur mo
         </div>
         <p class="mut">L'export contient aussi les photos. L'import remplace le quiz actuel.</p>
         <div class="btnrow">
-          <button id="pdf" class="alt"${QZ.length ? '' : ' disabled'}>Exporter les diapos en PDF</button>
+          <button id="pdf" class="alt"${QZ.length ? '' : ' disabled'}>Télécharger les diapos en PDF</button>
           <label class="chk"><input type="checkbox" id="pq" checked> Diapos de question</label>
           <label class="chk"><input type="checkbox" id="pc" checked> Diapos de correction</label>
         </div>
-        <p class="mut">Ouvre la fenêtre d'impression : choisissez « Enregistrer au format PDF » (ou « Microsoft Print to PDF »), sans marges, avec les graphiques d'arrière-plan.</p>
+        <p class="mut">Le PDF est créé et téléchargé directement (une page par diapo, 16:9, texte en image). Nécessite une connexion Internet.</p>
         <div id="lp" hidden>
           <p class="mut">Une question par ligne : question;réponse 1;réponse 2;réponse 3;réponse 4;bonnes réponses (ex. 1,3);image (mot-clé ou https://…);explication</p>
           <textarea id="lt" placeholder="Collez vos lignes ici"></textarea>
